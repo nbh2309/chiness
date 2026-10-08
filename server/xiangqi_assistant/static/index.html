@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Trợ lý cờ tướng</title>
+<style>
+  :root { --bg: #f6f3ee; --fg: #222; --card: #fff; --accent: #b3261e; --muted: #666; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #161616; --fg: #eee; --card: #232323; --muted: #aaa; } }
+  body { margin: 0; font-family: system-ui, sans-serif; background: var(--bg); color: var(--fg); }
+  main { max-width: 720px; margin: 0 auto; padding: 16px; }
+  .card { background: var(--card); border-radius: 12px; padding: 16px; margin-bottom: 12px; }
+  label { display: block; margin: 8px 0 4px; color: var(--muted); font-size: 14px; }
+  select, input, button { font-size: 16px; padding: 8px; border-radius: 8px; border: 1px solid #8884; width: 100%; box-sizing: border-box; }
+  button { background: var(--accent); color: #fff; border: 0; margin-top: 12px; }
+  #move { font-size: 28px; font-weight: 700; color: var(--accent); }
+  pre { font-size: 15px; line-height: 1.25; overflow-x: auto; }
+  img { max-width: 100%; border-radius: 8px; }
+  .warn { color: #c77700; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Trợ lý cờ tướng</h1>
+  <div class="card">
+    <label for="file">Ảnh bàn cờ</label>
+    <input id="file" type="file" accept="image/*" capture="environment">
+    <label for="turn">Lượt đi</label>
+    <select id="turn">
+      <option value="auto">Tự đoán (theo dõi ván)</option>
+      <option value="w">Đỏ đi</option>
+      <option value="b">Đen đi</option>
+    </select>
+    <label for="time">Thời gian suy nghĩ (ms)</label>
+    <input id="time" type="number" value="1500" min="100" max="30000">
+    <button id="go">Phân tích</button>
+    <button id="calib" style="background:#555">Hiệu chuẩn (ảnh thế cờ ban đầu)</button>
+    <button id="reset" style="background:#555">Ván mới</button>
+  </div>
+  <div class="card" id="result" hidden>
+    <div id="move"></div>
+    <div id="pv"></div>
+    <pre id="board"></pre>
+    <div id="warn" class="warn"></div>
+    <img id="debug" alt="Ảnh nhận dạng">
+  </div>
+</main>
+<script>
+let session = null;
+try { session = localStorage.getItem('xq_session'); } catch (e) {}
+if (!session) { session = Math.random().toString(36).slice(2); try { localStorage.setItem('xq_session', session); } catch (e) {} }
+const $ = id => document.getElementById(id);
+
+async function send(url, extra) {
+  const f = $('file').files[0];
+  if (!f) { alert('Chọn ảnh trước'); return null; }
+  const fd = new FormData();
+  fd.append('image', f);
+  for (const [k, v] of Object.entries(extra || {})) fd.append(k, v);
+  const r = await fetch(url, { method: 'POST', body: fd });
+  const j = await r.json();
+  if (!r.ok) { alert(j.detail || 'Lỗi'); return null; }
+  return j;
+}
+
+$('go').onclick = async () => {
+  $('go').disabled = true;
+  try {
+    const j = await send('/api/analyze', { turn: $('turn').value, session_id: session, movetime_ms: $('time').value, debug: true });
+    if (!j) return;
+    $('result').hidden = false;
+    const s = j.suggestion;
+    $('move').textContent = s.ok ? (s.display || 'Hết nước') : 'Thế cờ không hợp lệ';
+    $('pv').textContent = s.pv && s.pv.length ? 'Diễn biến: ' + s.pv.join('  ') : '';
+    $('board').textContent = j.board + '\n' + j.fen + (j.last_move ? '\nNước vừa đi: ' + j.last_move.text : '');
+    $('warn').textContent = [...(s.errors || []), ...j.recognition.warnings, ...j.notes].join(' • ');
+    $('debug').src = j.debug_jpeg_base64 ? 'data:image/jpeg;base64,' + j.debug_jpeg_base64 : '';
+  } finally { $('go').disabled = false; }
+};
+$('calib').onclick = async () => {
+  const j = await send('/api/calibrate');
+  if (j) alert('Đã lưu ' + j.saved + ' ảnh quân vào ' + j.directory + '. Chạy tools/train_cnn.py --real để tinh chỉnh.');
+};
+$('reset').onclick = async () => {
+  await fetch('/api/session/' + session + '/reset', { method: 'POST' });
+  alert('Đã bắt đầu ván mới');
+};
+</script>
+</body>
+</html>

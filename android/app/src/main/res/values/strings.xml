@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Cờ tướng AR</string>
+    <string name="hint">Chạm / nhấn OK để chụp và phân tích</string>
+    <string name="server_url">Địa chỉ máy chủ</string>
+</resources>

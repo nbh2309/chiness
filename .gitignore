@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.pytest_cache/
+server/engines/
+server/data/
+# Android
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+*.iml
+.idea/

@@ -1,0 +1,6 @@
+-r requirements.txt
+pytest>=8.0
+httpx>=0.27
+# chỉ cần khi huấn luyện lại mô hình nhận dạng quân
+torch>=2.2
+onnx>=1.15
