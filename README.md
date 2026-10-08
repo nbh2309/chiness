@@ -92,7 +92,8 @@ adb install app/build/outputs/apk/debug/app-debug.apk
 | Ký hiệu tiếng Việt | ✅ test đơn vị |
 | Tìm bàn cờ + lưới (4 hướng chụp, phối cảnh) | ✅ sai số < 4px trên ảnh tổng hợp |
 | Phát hiện quân + màu | ✅ đúng 100% trên ảnh tổng hợp |
-| Phân loại loại quân (CNN) | ✅ trên ảnh tổng hợp. ❓ ảnh thật: cần dữ liệu của bạn |
+| Toàn bộ test | ✅ 34 test (`pytest -q`) |
+| Phân loại loại quân (CNN) | ✅ ảnh tổng hợp: 39/40 bàn đúng hoàn toàn (sai 1 ô / ~1 000 quân). ❓ ảnh thật: cần dữ liệu của bạn |
 | Gọi Pikafish | ✅ với engine giả lập UCI. ❓ chưa chạy Pikafish thật (môi trường build bị chặn mạng) |
 | App Android | ❓ **chưa build thử** (môi trường không tải được Android SDK). Có thể cần sửa lỗi biên dịch nhỏ |
 
